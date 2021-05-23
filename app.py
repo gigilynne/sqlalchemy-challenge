@@ -1,7 +1,27 @@
-#import Flask
-from flask import Flask
+#import Flask and other dependencies
+import numpy as np
+import datetime as dt
 
-#create and app, pass name
+import sqlalchemy
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func
+
+from flask import Flask, jsonify
+
+#Set up database
+engine = create_engine("sqlite:///hawaii.sqlite")
+session = Session(engine)
+
+# reflect an existing database and tables
+Base = automap_base()
+Base.prepare(engine, reflect=True)
+
+# Save references to each table
+Measurement = Base.classes.measurement
+Station = Base.classes.station
+
+#create app, pass name
 app = Flask(__name__)
 
 #Define the inital route and state alternatives
@@ -19,9 +39,10 @@ def about():
     )
 # create paths for alternative routes
 @app.route('/api/v1.0/<start>')
-def get_t_start(start):
-    session = Session(engine)
+def start(start):
+    
     query_result = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start).all()
+
     session.close()
 
     tobs_all = []
@@ -35,9 +56,9 @@ def get_t_start(start):
     return jsonify(tobs_all)
 
 @app.route('/api/v1.0/<start>/<stop>')
-def get_t_start_stop(start,stop):
-    session = Session(engine)
+def start_stop(start,stop):
     query_result = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start).filter(Measurement.date <= stop).all()
+    
     session.close()
 
     tobs_all = []
@@ -52,13 +73,13 @@ def get_t_start_stop(start,stop):
 
 @app.route('/api/v1.0/tobs')
 def tobs():
-    session = Session(engine)
     recent_dt = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
     last_date = dt.datetime.strptime(recent_dt, '%Y-%m-%d')
     query_date = dt.date(last_date.year -1, last_date.month, last_date.day)
     sel = [Measurement.date,Measurement.tobs]
     query_result = session.query(*sel).filter(Measurement.date >= query_date).all()
-    session.close()
+    
+    # session.close()
 
     tobs_all = []
     for date, tobs in query_result:
@@ -71,10 +92,10 @@ def tobs():
 
 @app.route('/api/v1.0/stations')
 def stations():
-    session = Session(engine)
     sel = [Station.station,Station.name,Station.latitude,Station.longitude,Station.elevation]
     query_result = session.query(*sel).all()
-    session.close()
+   
+    # session.close()
 
     stations = []
     for station,name,lat,lon,el in query_result:
@@ -90,9 +111,9 @@ def stations():
 
 @app.route('/api/v1.0/precipitation')
 def precipitation():
-    session = Session(engine)
     sel = [Measurement.date,Measurement.prcp]
     query_result = session.query(*sel).all()
+
     session.close()
 
     precipitation = []
