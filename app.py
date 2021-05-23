@@ -43,8 +43,6 @@ def start(start):
     
     query_result = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start).all()
 
-    session.close()
-
     tobs_all = []
     for min,avg,max in query_result:
         tobs_dict = {}
@@ -78,8 +76,6 @@ def tobs():
     query_date = dt.date(last_date.year -1, last_date.month, last_date.day)
     sel = [Measurement.date,Measurement.tobs]
     query_result = session.query(*sel).filter(Measurement.date >= query_date).all()
-    
-    # session.close()
 
     tobs_all = []
     for date, tobs in query_result:
@@ -94,8 +90,6 @@ def tobs():
 def stations():
     sel = [Station.station,Station.name,Station.latitude,Station.longitude,Station.elevation]
     query_result = session.query(*sel).all()
-   
-    # session.close()
 
     stations = []
     for station,name,lat,lon,el in query_result:
